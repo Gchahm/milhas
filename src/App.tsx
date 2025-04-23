@@ -3,14 +3,15 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useSelector } from 'react-redux';
 import { RootState } from './store';
 import { useAuthInitialize } from './hooks/useAuthInitialize';
+import { useCustomers } from './hooks/useCustomers';
+import { useAirlines } from './hooks/useAirlines';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
 import CustomerList from './components/customers/CustomerList';
-import AirlineList from './components/AirlineList';
+import AirlineList from './components/airlines/AirlineList';
 import DashboardLayout from './components/layout/DashboardLayout';
 import AppSnackbar from './components/common/AppSnackbar';
 import { CircularProgress, Box } from '@mui/material';
-import { useCustomers } from './hooks/useCustomers';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useSelector((state: RootState) => state.auth);
@@ -33,6 +34,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const App = () => {
   useAuthInitialize();
   useCustomers();
+  useAirlines();
   const { user, loading } = useSelector((state: RootState) => state.auth);
 
   if (loading) {

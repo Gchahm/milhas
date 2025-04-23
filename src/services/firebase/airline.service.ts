@@ -1,12 +1,14 @@
 import { db } from '../../config/firebase';
 import { 
   collection, 
-  getDocs,
   addDoc,
   updateDoc,
   doc,
   DocumentData,
-  QueryDocumentSnapshot 
+  QueryDocumentSnapshot,
+  onSnapshot,
+  query,
+  Unsubscribe
 } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 
@@ -16,28 +18,39 @@ export interface Airline {
   createdAt: Date;
 }
 
+const USERS_COLLECTION = 'users';
+
 const convertToAirline = (doc: QueryDocumentSnapshot<DocumentData>): Airline => ({
   id: doc.id,
-  ...(doc.data() as Omit<Airline, 'id'>),
+  ...(doc.data() as Omit<Airline, 'id' | 'createdAt'>),
   createdAt: doc.data().createdAt?.toDate() || new Date()
 });
 
-export const airlineService = {
-  async getAllAirlines(currentUser: User): Promise<Airline[]> {
-    if (!currentUser) {
-      throw new Error('No authenticated user');
-    }
+export class AirlineService {
+  private static instance: AirlineService;
 
-    try {
-      const airlinesRef = collection(db, 'users', currentUser.uid, 'airlines');
-      const querySnapshot = await getDocs(airlinesRef);
-      return querySnapshot.docs.map(convertToAirline);
-    } catch (error: any) {
-      throw new Error(`Error fetching airlines: ${error.message}`);
-    }
-  },
+  private constructor() {}
 
-  async addAirline(name: string, currentUser: User): Promise<Airline> {
+  static getInstance(): AirlineService {
+    if (!AirlineService.instance) {
+      AirlineService.instance = new AirlineService();
+    }
+    return AirlineService.instance;
+  }
+
+  subscribeToAirlines(userId: string, callback: (airlines: Airline[]) => void): Unsubscribe {
+    const airlinesRef = collection(db, USERS_COLLECTION, userId, 'airlines');
+    const airlinesQuery = query(airlinesRef);
+    
+    return onSnapshot(airlinesQuery, (snapshot) => {
+      const airlines = snapshot.docs.map(convertToAirline);
+      callback(airlines);
+    }, (error) => {
+      console.error('Error in airlines subscription:', error);
+    });
+  }
+
+  async addAirline(name: string, currentUser: User): Promise<void> {
     if (!currentUser) {
       throw new Error('No authenticated user');
     }
@@ -48,17 +61,13 @@ export const airlineService = {
         createdAt: new Date()
       };
 
-      const airlinesRef = collection(db, 'users', currentUser.uid, 'airlines');
-      const docRef = await addDoc(airlinesRef, airlineData);
-      
-      return {
-        id: docRef.id,
-        ...airlineData
-      };
+      const airlinesRef = collection(db, USERS_COLLECTION, currentUser.uid, 'airlines');
+      await addDoc(airlinesRef, airlineData);
+      // No need to return anything as the subscription will handle the update
     } catch (error: any) {
       throw new Error(`Error adding airline: ${error.message}`);
     }
-  },
+  }
 
   async updateAirline(
     airlineId: string, 
@@ -72,7 +81,7 @@ export const airlineService = {
     try {
       const airlineRef = doc(
         db, 
-        'users', 
+        USERS_COLLECTION, 
         currentUser.uid, 
         'airlines', 
         airlineId
@@ -81,8 +90,11 @@ export const airlineService = {
         name,
         updatedAt: new Date()
       });
+      // No need to return anything as the subscription will handle the update
     } catch (error: any) {
       throw new Error(`Error updating airline: ${error.message}`);
     }
   }
-}; 
+}
+
+export const airlineService = AirlineService.getInstance(); 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { customerService, type Customer } from '../../services/firebase/customer.service';
-import { setError } from '../../store/slices/customerSlice';
+import { airlineService, type Airline } from '../../services/firebase/airline.service';
+import { setError } from '../../store/slices/airlineSlice';
 import { showSnackbar } from '../../store/slices/snackbarSlice';
 import { RootState } from '../../store';
 import {
@@ -19,51 +19,46 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
-import AddEditCustomer from './AddEditCustomer';
+import AddEditAirline from './AddEditAirline';
 
-const CustomerList = () => {
+const AirlineList = () => {
   const dispatch = useDispatch();
-  const { customers } = useSelector((state: RootState) => state.customers);
-  const { error } = useSelector((state: RootState) => state.customers);
+  const { airlines } = useSelector((state: RootState) => state.airlines);
+  const { error } = useSelector((state: RootState) => state.airlines);
   const { user } = useSelector((state: RootState) => state.auth);
   
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>();
+  const [selectedAirline, setSelectedAirline] = useState<Airline | undefined>();
 
   const handleAdd = () => {
-    setSelectedCustomer(undefined);
+    setSelectedAirline(undefined);
     setDialogOpen(true);
   };
 
-  const handleEdit = (customer: Customer) => {
-    setSelectedCustomer(customer);
+  const handleEdit = (airline: Airline) => {
+    setSelectedAirline(airline);
     setDialogOpen(true);
   };
 
   const handleClose = () => {
     setDialogOpen(false);
-    setSelectedCustomer(undefined);
+    setSelectedAirline(undefined);
   };
 
-  const handleSubmit = async (formData: {
-    name: string;
-    cpf: string;
-    email: string;
-    phone: string;
-  }) => {
+  const handleSubmit = async (formData: { name: string }) => {
     if (!user) return;
 
     try {
-      if (selectedCustomer) {
-        await customerService.updateCustomer(selectedCustomer.id, formData, user);
+      if (selectedAirline) {
+        await airlineService.updateAirline(selectedAirline.id, formData.name, user);
         dispatch(showSnackbar({
-          message: 'Customer updated successfully!',
+          message: 'Airline updated successfully!',
           severity: 'success'
         }));
       } else {
-        await customerService.addCustomer(formData, user);
+        await airlineService.addAirline(formData.name, user);
         dispatch(showSnackbar({
-          message: 'Customer added successfully!',
+          message: 'Airline added successfully!',
           severity: 'success'
         }));
       }
@@ -83,14 +78,14 @@ const CustomerList = () => {
     <>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4">
-          Customers
+          Airlines
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={handleAdd}
         >
-          Add Customer
+          Add Airline
         </Button>
       </Box>
 
@@ -99,27 +94,21 @@ const CustomerList = () => {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
-              <TableCell>CPF</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Phone</TableCell>
               <TableCell>Created At</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {customers.map((customer) => (
-              <TableRow key={customer.id}>
-                <TableCell>{customer.name}</TableCell>
-                <TableCell>{customer.cpf}</TableCell>
-                <TableCell>{customer.email}</TableCell>
-                <TableCell>{customer.phone}</TableCell>
+            {airlines.map((airline) => (
+              <TableRow key={airline.id}>
+                <TableCell>{airline.name}</TableCell>
                 <TableCell>
-                  {customer.createdAt.toLocaleDateString()}
+                  {airline.createdAt.toLocaleDateString()}
                 </TableCell>
                 <TableCell>
                   <IconButton 
                     color="primary"
-                    onClick={() => handleEdit(customer)}
+                    onClick={() => handleEdit(airline)}
                     size="small"
                   >
                     <EditIcon />
@@ -131,15 +120,15 @@ const CustomerList = () => {
         </Table>
       </TableContainer>
 
-      <AddEditCustomer
+      <AddEditAirline
         open={dialogOpen}
         onClose={handleClose}
         onSubmit={handleSubmit}
-        initialData={selectedCustomer}
-        mode={selectedCustomer ? 'edit' : 'add'}
+        initialData={selectedAirline}
+        mode={selectedAirline ? 'edit' : 'add'}
       />
     </>
   );
 };
 
-export default CustomerList; 
+export default AirlineList; 
