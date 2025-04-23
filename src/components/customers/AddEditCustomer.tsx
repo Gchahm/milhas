@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { Formik, Form, Field } from 'formik';
+import * as Yup from 'yup';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Button,
   Box
 } from '@mui/material';
+import { TextField } from 'formik-mui';
 import { Customer } from '../../services/firebase/customer.service';
 
 interface CustomerFormData {
@@ -25,6 +27,26 @@ interface AddEditCustomerProps {
   mode: 'add' | 'edit';
 }
 
+// Validation schema using Yup
+const validationSchema = Yup.object().shape({
+  name: Yup.string()
+    .required('Name is required')
+    .min(2, 'Name must be at least 2 characters')
+    .max(50, 'Name must be less than 50 characters'),
+  cpf: Yup.string()
+    .required('CPF is required')
+    .matches(/^\d{11}$/, 'CPF must be exactly 11 digits'),
+  email: Yup.string()
+    .required('Email is required')
+    .email('Invalid email format'),
+  phone: Yup.string()
+    .required('Phone is required')
+    .matches(
+      /^(\+\d{1,3}[- ]?)?\d{10,}$/,
+      'Please enter a valid phone number'
+    ),
+});
+
 const initialFormData: CustomerFormData = {
   name: '',
   cpf: '',
@@ -39,66 +61,17 @@ const AddEditCustomer: React.FC<AddEditCustomerProps> = ({
   initialData,
   mode
 }) => {
-  const [formData, setFormData] = useState<CustomerFormData>(initialFormData);
-  const [formErrors, setFormErrors] = useState<Partial<CustomerFormData>>({});
-
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        name: initialData.name,
-        cpf: initialData.cpf,
-        email: initialData.email,
-        phone: initialData.phone,
-      });
-    } else {
-      setFormData(initialFormData);
-    }
-  }, [initialData, open]);
-
-  const validateForm = (): boolean => {
-    const errors: Partial<CustomerFormData> = {};
-    
-    if (!formData.name.trim()) {
-      errors.name = 'Name is required';
-    }
-    
-    if (!formData.cpf.trim()) {
-      errors.cpf = 'CPF is required';
-    } else if (!/^\d{11}$/.test(formData.cpf)) {
-      errors.cpf = 'CPF must be 11 digits';
-    }
-    
-    if (!formData.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Invalid email format';
-    }
-    
-    if (!formData.phone.trim()) {
-      errors.phone = 'Phone is required';
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
-    await onSubmit(formData);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error when user starts typing
-    if (formErrors[name as keyof CustomerFormData]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [name]: undefined
-      }));
+  const handleSubmit = async (
+    values: CustomerFormData,
+    { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void }
+  ) => {
+    try {
+      await onSubmit(values);
+      onClose();
+    } catch (error) {
+      console.error('Form submission error:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -112,58 +85,69 @@ const AddEditCustomer: React.FC<AddEditCustomerProps> = ({
       <DialogTitle>
         {mode === 'add' ? 'Add New Customer' : 'Edit Customer'}
       </DialogTitle>
-      <DialogContent>
-        <Box sx={{ pt: 2 }}>
-          <TextField
-            margin="dense"
-            label="Name"
-            name="name"
-            fullWidth
-            value={formData.name}
-            onChange={handleChange}
-            error={!!formErrors.name}
-            helperText={formErrors.name}
-          />
-          <TextField
-            margin="dense"
-            label="CPF"
-            name="cpf"
-            fullWidth
-            value={formData.cpf}
-            onChange={handleChange}
-            error={!!formErrors.cpf}
-            helperText={formErrors.cpf}
-            disabled={mode === 'edit'} // CPF shouldn't be editable in edit mode
-          />
-          <TextField
-            margin="dense"
-            label="Email"
-            name="email"
-            type="email"
-            fullWidth
-            value={formData.email}
-            onChange={handleChange}
-            error={!!formErrors.email}
-            helperText={formErrors.email}
-          />
-          <TextField
-            margin="dense"
-            label="Phone"
-            name="phone"
-            fullWidth
-            value={formData.phone}
-            onChange={handleChange}
-            error={!!formErrors.phone}
-            helperText={formErrors.phone}
-          />
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained">
-          {mode === 'add' ? 'Add Customer' : 'Save Changes'}
-        </Button>
-      </DialogActions>
+      <Formik
+        initialValues={initialData || initialFormData}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
+        enableReinitialize
+      >
+        {({ isSubmitting, dirty, isValid }) => (
+          <Form>
+            <DialogContent>
+              <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Field
+                  component={TextField}
+                  name="name"
+                  label="Name"
+                  fullWidth
+                  variant="outlined"
+                />
+                
+                <Field
+                  component={TextField}
+                  name="cpf"
+                  label="CPF"
+                  fullWidth
+                  variant="outlined"
+                  disabled={mode === 'edit'}
+                />
+                
+                <Field
+                  component={TextField}
+                  name="email"
+                  label="Email"
+                  fullWidth
+                  variant="outlined"
+                  type="email"
+                />
+                
+                <Field
+                  component={TextField}
+                  name="phone"
+                  label="Phone"
+                  fullWidth
+                  variant="outlined"
+                />
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button 
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                variant="contained"
+                disabled={isSubmitting || !dirty || !isValid}
+              >
+                {isSubmitting ? 'Saving...' : mode === 'add' ? 'Add Customer' : 'Save Changes'}
+              </Button>
+            </DialogActions>
+          </Form>
+        )}
+      </Formik>
     </Dialog>
   );
 };
