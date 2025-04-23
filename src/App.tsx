@@ -9,6 +9,7 @@ import CustomerList from './components/customers/CustomerList';
 import AirlineList from './components/AirlineList';
 import DashboardLayout from './components/layout/DashboardLayout';
 import { CircularProgress, Box } from '@mui/material';
+import { useCustomers } from './hooks/useCustomers';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useSelector((state: RootState) => state.auth);
@@ -30,6 +31,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 const App = () => {
   useAuthInitialize();
+  useCustomers();
   const { user, loading } = useSelector((state: RootState) => state.auth);
 
   if (loading) {

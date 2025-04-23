@@ -1,14 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { customerService, type Customer } from '../../services/firebase/customer.service';
-import { 
-  setCustomers, 
-  setLoading, 
-  setError, 
-  addCustomer,
-  updateCustomer 
-} from '../../store/slices/customerSlice';
+import { setError } from '../../store/slices/customerSlice';
 import { RootState } from '../../store';
+import { useCustomers } from '../../hooks/useCustomers';
 import {
   Table,
   TableBody,
@@ -30,43 +25,20 @@ import AddEditCustomer from './AddEditCustomer';
 
 const CustomerList = () => {
   const dispatch = useDispatch();
-  const { customers, loading, error } = useSelector(
-    (state: RootState) => state.customers
-  );
+  const { customers } = useSelector((state: RootState) => state.customers);
+  const { error } = useSelector((state: RootState) => state.customers);
   const { user } = useSelector((state: RootState) => state.auth);
   
-  // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>();
   const [successMessage, setSuccessMessage] = useState('');
 
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      if (!user) return;
-      
-      dispatch(setLoading(true));
-      try {
-        const customerData = await customerService.getAllCustomers(user);
-        dispatch(setCustomers(customerData));
-        dispatch(setError(null));
-      } catch (error: any) {
-        dispatch(setError(error.message));
-      } finally {
-        dispatch(setLoading(false));
-      }
-    };
-
-    fetchCustomers();
-  }, [dispatch, user]);
-
   const handleAdd = () => {
-    console.log('Opening dialog for add');
     setSelectedCustomer(undefined);
     setDialogOpen(true);
   };
 
   const handleEdit = (customer: Customer) => {
-    console.log('Opening dialog for edit', customer);
     setSelectedCustomer(customer);
     setDialogOpen(true);
   };
@@ -86,18 +58,10 @@ const CustomerList = () => {
 
     try {
       if (selectedCustomer) {
-        // Update existing customer
         await customerService.updateCustomer(selectedCustomer.id, formData, user);
-        const updatedCustomer = {
-          ...selectedCustomer,
-          ...formData
-        };
-        dispatch(updateCustomer(updatedCustomer));
         setSuccessMessage('Customer updated successfully!');
       } else {
-        // Add new customer
-        const newCustomer = await customerService.addCustomer(formData, user);
-        dispatch(addCustomer(newCustomer));
+        await customerService.addCustomer(formData, user);
         setSuccessMessage('Customer added successfully!');
       }
       handleClose();
@@ -106,7 +70,6 @@ const CustomerList = () => {
     }
   };
 
-  if (loading) return <Typography>Loading...</Typography>;
   if (error) return <Typography color="error">{error}</Typography>;
 
   return (
