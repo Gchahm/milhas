@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { customerService, type Customer } from '../../services/firebase/customer.service';
 import { setError } from '../../store/slices/customerSlice';
+import { showSnackbar } from '../../store/slices/snackbarSlice';
 import { RootState } from '../../store';
 import { useCustomers } from '../../hooks/useCustomers';
 import {
@@ -16,8 +17,6 @@ import {
   Button,
   Box,
   IconButton,
-  Snackbar,
-  Alert
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -31,7 +30,6 @@ const CustomerList = () => {
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>();
-  const [successMessage, setSuccessMessage] = useState('');
 
   const handleAdd = () => {
     setSelectedCustomer(undefined);
@@ -59,14 +57,24 @@ const CustomerList = () => {
     try {
       if (selectedCustomer) {
         await customerService.updateCustomer(selectedCustomer.id, formData, user);
-        setSuccessMessage('Customer updated successfully!');
+        dispatch(showSnackbar({
+          message: 'Customer updated successfully!',
+          severity: 'success'
+        }));
       } else {
         await customerService.addCustomer(formData, user);
-        setSuccessMessage('Customer added successfully!');
+        dispatch(showSnackbar({
+          message: 'Customer added successfully!',
+          severity: 'success'
+        }));
       }
       handleClose();
     } catch (error: any) {
       dispatch(setError(error.message));
+      dispatch(showSnackbar({
+        message: error.message,
+        severity: 'error'
+      }));
     }
   };
 
@@ -131,20 +139,6 @@ const CustomerList = () => {
         initialData={selectedCustomer}
         mode={selectedCustomer ? 'edit' : 'add'}
       />
-
-      <Snackbar
-        open={!!successMessage}
-        autoHideDuration={6000}
-        onClose={() => setSuccessMessage('')}
-      >
-        <Alert 
-          onClose={() => setSuccessMessage('')} 
-          severity="success"
-          sx={{ width: '100%' }}
-        >
-          {successMessage}
-        </Alert>
-      </Snackbar>
     </>
   );
 };

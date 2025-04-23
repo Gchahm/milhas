@@ -8,6 +8,7 @@ import SignUp from './components/SignUp';
 import CustomerList from './components/customers/CustomerList';
 import AirlineList from './components/AirlineList';
 import DashboardLayout from './components/layout/DashboardLayout';
+import AppSnackbar from './components/common/AppSnackbar';
 import { CircularProgress, Box } from '@mui/material';
 import { useCustomers } from './hooks/useCustomers';
 
@@ -43,38 +44,41 @@ const App = () => {
   }
 
   return (
-    <Router>
-      <Routes>
-        <Route 
-          path="/login" 
-          element={user ? <Navigate to="/customers" /> : <Login />} 
-        />
-        <Route 
-          path="/signup" 
-          element={user ? <Navigate to="/customers" /> : <SignUp />} 
-        />
-        <Route
-          path="/customers"
-          element={
-            <ProtectedRoute>
-              <CustomerList />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/airlines"
-          element={
-            <ProtectedRoute>
-              <AirlineList />
-            </ProtectedRoute>
-          }
-        />
-        <Route 
-          path="/" 
-          element={<Navigate to="/customers" />} 
-        />
-      </Routes>
-    </Router>
+    <>
+      <Router>
+        <Routes>
+          <Route 
+            path="/login" 
+            element={user ? <Navigate to="/customers" /> : <Login />} 
+          />
+          <Route 
+            path="/signup" 
+            element={user ? <Navigate to="/customers" /> : <SignUp />} 
+          />
+          <Route
+            path="/customers"
+            element={
+              <ProtectedRoute>
+                <CustomerList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/airlines"
+            element={
+              <ProtectedRoute>
+                <AirlineList />
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/" 
+            element={<Navigate to="/customers" />} 
+          />
+        </Routes>
+      </Router>
+      <AppSnackbar />
+    </>
   );
 };
 
