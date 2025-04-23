@@ -169,8 +169,8 @@ const CustomerList = () => {
   if (error) return <Typography color="error">{error}</Typography>;
 
   return (
-    <Container>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', my: 4 }}>
+    <>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4">
           Customers
         </Typography>
@@ -293,7 +293,7 @@ const CustomerList = () => {
           {successMessage}
         </Alert>
       </Snackbar>
-    </Container>
+    </>
   );
 };
 
