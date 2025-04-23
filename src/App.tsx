@@ -5,7 +5,7 @@ import { RootState } from './store';
 import { useAuthInitialize } from './hooks/useAuthInitialize';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
-import CustomerList from './components/CustomerList';
+import CustomerList from './components/customers/CustomerList';
 import AirlineList from './components/AirlineList';
 import DashboardLayout from './components/layout/DashboardLayout';
 import { CircularProgress, Box } from '@mui/material';
