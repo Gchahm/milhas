@@ -15,14 +15,17 @@ import {
   ListItemText,
   useTheme,
   styled,
-  Button
+  Button,
+  Link as RouterLink
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   People as PeopleIcon,
   FlightTakeoff as FlightIcon,
   ChevronLeft as ChevronLeftIcon,
-  Logout as LogoutIcon
+  Logout as LogoutIcon,
+  Dashboard as DashboardIcon,
+  PointOfSale as PointOfSaleIcon
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
@@ -59,6 +62,7 @@ interface NavigationItem {
 const navigationItems: NavigationItem[] = [
   { text: 'Customers', path: '/customers', icon: <PeopleIcon /> },
   { text: 'Airlines', path: '/airlines', icon: <FlightIcon /> },
+  { text: 'Sales', path: '/sales', icon: <PointOfSaleIcon /> },
 ];
 
 const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {

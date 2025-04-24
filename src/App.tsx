@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { RootState } from './store';
+import { useSelector, useDispatch } from 'react-redux';
+import { auth } from './config/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { Typography } from '@mui/material';
+import { RootState, AppDispatch } from './store';
 import { useAuthInitialize } from './hooks/useAuthInitialize';
 import { useCustomers } from './hooks/useCustomers';
 import { useAirlines } from './hooks/useAirlines';
@@ -12,6 +15,7 @@ import AirlineList from './components/airlines/AirlineList';
 import DashboardLayout from './components/layout/DashboardLayout';
 import AppSnackbar from './components/common/AppSnackbar';
 import { CircularProgress, Box } from '@mui/material';
+import SaleList from './components/sales/SaleList';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useSelector((state: RootState) => state.auth);
@@ -73,9 +77,13 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          <Route 
-            path="/" 
-            element={<Navigate to="/customers" />} 
+          <Route
+            path="/sales"
+            element={
+              <ProtectedRoute>
+                <SaleList />
+              </ProtectedRoute>
+            }
           />
         </Routes>
       </Router>
