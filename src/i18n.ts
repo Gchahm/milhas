@@ -19,6 +19,8 @@ const resources = {
         unknownError: "An unknown error occurred",
         pleaseWait: "Please wait...",
         unknown: "Unknown", // Generic unknown
+        add: "Add",
+        save: "Save",
       },
       auth: {
         loginRequired: "You must be logged in to perform this action.",
@@ -64,7 +66,11 @@ const resources = {
             updateError: "Failed to update customer",
             addError: "Failed to add customer",
             deleteError: "Failed to delete customer",
-        }
+        },
+        name: "Name",
+        cpf: "CPF",
+        email: "Email",
+        phone: "Phone",
       },
       airlines: {
         title: "Airlines",
@@ -193,7 +199,11 @@ const resources = {
             updateError: "Error al actualizar el cliente",
             addError: "Error al añadir el cliente",
             deleteError: "Error al eliminar el cliente",
-        }
+        },
+        name: "Nombre",
+        cpf: "CPF",
+        email: "Correo electrónico",
+        phone: "Teléfono",
       },
       airlines: {
         title: "Aerolíneas",
@@ -277,6 +287,8 @@ const resources = {
         unknownError: "Ocorreu um erro desconhecido",
         pleaseWait: "Por favor, aguarde...",
         unknown: "Desconhecido",
+        add: "Adicionar",
+        save: "Salvar",
       },
       auth: {
         loginRequired: "Você precisa estar logado para realizar esta ação.",
@@ -321,7 +333,11 @@ const resources = {
             updateError: "Falha ao atualizar cliente",
             addError: "Falha ao adicionar cliente",
             deleteError: "Falha ao excluir cliente",
-        }
+        },
+        name: "Nome",
+        cpf: "CPF",
+        email: "Email",
+        phone: "Telefone",
       },
       airlines: {
         title: "Companhias Aéreas",

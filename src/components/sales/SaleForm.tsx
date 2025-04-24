@@ -10,7 +10,9 @@ import {
   TextField as MuiTextField,
   Autocomplete,
   Typography,
-  Paper
+  Paper,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -25,6 +27,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import AddEditCustomer from '../customers/AddEditCustomer';
 import AddEditAirline from '../airlines/AddEditAirline';
+import AddIcon from '@mui/icons-material/Add';
 
 type SaleFormData = Omit<Sale, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -150,8 +153,8 @@ const SaleForm: React.FC = () => {
                       />
                     </LocalizationProvider>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Grid size={12}>
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
                       <Autocomplete
                         id="customer-autocomplete"
                         options={customers}
@@ -170,17 +173,21 @@ const SaleForm: React.FC = () => {
                             helperText={touched.customerId && errors.customerId ? errors.customerId : ' '}
                           />
                         )}
+                        sx={{ flex: 1 }}
                       />
-                      <Button
-                        variant="outlined"
-                        onClick={() => setShowCustomerDialog(true)}
-                      >
-                        {t('common.add')}
-                      </Button>
+                      <Tooltip title={t('common.add')}>
+                        <IconButton
+                          onClick={() => setShowCustomerDialog(true)}
+                          color="primary"
+                          sx={{ mt: 1 }}
+                        >
+                          <AddIcon />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Grid size={12}>
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
                       <Autocomplete
                         id="airline-autocomplete"
                         options={airlines}
@@ -199,16 +206,20 @@ const SaleForm: React.FC = () => {
                             helperText={touched.airlineId && errors.airlineId ? errors.airlineId : ' '}
                           />
                         )}
+                        sx={{ flex: 1 }}
                       />
-                      <Button
-                        variant="outlined"
-                        onClick={() => setShowAirlineDialog(true)}
-                      >
-                        {t('common.add')}
-                      </Button>
+                      <Tooltip title={t('common.add')}>
+                        <IconButton
+                          onClick={() => setShowAirlineDialog(true)}
+                          color="primary"
+                          sx={{ mt: 1 }}
+                        >
+                          <AddIcon />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
+                  <Grid size={12}>
                     <Field
                       as={MuiTextField}
                       name="value"
@@ -221,7 +232,7 @@ const SaleForm: React.FC = () => {
                       InputProps={{ inputProps: { min: 0 } }}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
+                  <Grid size={12}>
                     <Field
                       as={MuiTextField}
                       name="cost"
@@ -252,7 +263,7 @@ const SaleForm: React.FC = () => {
                 </Grid>
 
                 <AddEditCustomer
-                  open={showCustomerDialog}
+                    open={showCustomerDialog}
                   onClose={() => setShowCustomerDialog(false)}
                   onSuccess={handleCustomerCreated}
                   mode="add"
