@@ -50,7 +50,7 @@ export class AirlineService {
     });
   }
 
-  async addAirline(name: string, currentUser: User): Promise<void> {
+  async addAirline(name: string, currentUser: User): Promise<Airline> {
     if (!currentUser) {
       throw new Error('No authenticated user');
     }
@@ -62,8 +62,13 @@ export class AirlineService {
       };
 
       const airlinesRef = collection(db, USERS_COLLECTION, currentUser.uid, 'airlines');
-      await addDoc(airlinesRef, airlineData);
-      // No need to return anything as the subscription will handle the update
+      const docRef = await addDoc(airlinesRef, airlineData);
+      
+      return {
+        id: docRef.id,
+        name,
+        createdAt: airlineData.createdAt
+      };
     } catch (error: any) {
       throw new Error(`Error adding airline: ${error.message}`);
     }

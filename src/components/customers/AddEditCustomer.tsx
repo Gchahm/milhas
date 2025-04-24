@@ -11,6 +11,11 @@ import {
 } from '@mui/material';
 import { TextField } from 'formik-mui';
 import { Customer } from '../../models/customer.model';
+import { customerService } from '../../services/firebase/customer.service';
+import { useSnackbar } from '../../hooks/useSnackbar';
+import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 
 interface CustomerFormData {
   name: string;
@@ -22,7 +27,7 @@ interface CustomerFormData {
 interface AddEditCustomerProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (formData: CustomerFormData) => Promise<void>;
+  onSuccess?: (customer: Customer) => void;
   initialData?: Customer;
   mode: 'add' | 'edit';
 }
@@ -57,19 +62,32 @@ const initialFormData: CustomerFormData = {
 const AddEditCustomer: React.FC<AddEditCustomerProps> = ({
   open,
   onClose,
-  onSubmit,
+  onSuccess,
   initialData,
   mode
 }) => {
+  const { t } = useTranslation();
+  const { enqueueSnackbar } = useSnackbar();
+  const { user } = useSelector((state: RootState) => state.auth);
+
   const handleSubmit = async (
     values: CustomerFormData,
     { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void }
   ) => {
+    if (!user) return;
+
     try {
-      await onSubmit(values);
+      if (mode === 'edit' && initialData) {
+        await customerService.updateCustomer(initialData.id, values, user);
+        enqueueSnackbar(t('customers.notifications.updated'), { severity: 'success' });
+      } else {
+        const newCustomer = await customerService.addCustomer(values, user);
+        enqueueSnackbar(t('customers.notifications.added'), { severity: 'success' });
+        onSuccess?.(newCustomer);
+      }
       onClose();
-    } catch (error) {
-      console.error('Form submission error:', error);
+    } catch (error: any) {
+      enqueueSnackbar(error.message || t('common.error'), { severity: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -83,7 +101,7 @@ const AddEditCustomer: React.FC<AddEditCustomerProps> = ({
       fullWidth
     >
       <DialogTitle>
-        {mode === 'add' ? 'Add New Customer' : 'Edit Customer'}
+        {mode === 'add' ? t('customers.add') : t('customers.edit')}
       </DialogTitle>
       <Formik
         initialValues={initialData || initialFormData}
@@ -98,7 +116,7 @@ const AddEditCustomer: React.FC<AddEditCustomerProps> = ({
                 <Field
                   component={TextField}
                   name="name"
-                  label="Name"
+                  label={t('customers.name')}
                   fullWidth
                   variant="outlined"
                 />
@@ -106,7 +124,7 @@ const AddEditCustomer: React.FC<AddEditCustomerProps> = ({
                 <Field
                   component={TextField}
                   name="cpf"
-                  label="CPF"
+                  label={t('customers.cpf')}
                   fullWidth
                   variant="outlined"
                   disabled={mode === 'edit'}
@@ -115,7 +133,7 @@ const AddEditCustomer: React.FC<AddEditCustomerProps> = ({
                 <Field
                   component={TextField}
                   name="email"
-                  label="Email"
+                  label={t('customers.email')}
                   fullWidth
                   variant="outlined"
                   type="email"
@@ -124,7 +142,7 @@ const AddEditCustomer: React.FC<AddEditCustomerProps> = ({
                 <Field
                   component={TextField}
                   name="phone"
-                  label="Phone"
+                  label={t('customers.phone')}
                   fullWidth
                   variant="outlined"
                 />
@@ -135,14 +153,14 @@ const AddEditCustomer: React.FC<AddEditCustomerProps> = ({
                 onClick={onClose}
                 disabled={isSubmitting}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button 
                 type="submit"
                 variant="contained"
                 disabled={isSubmitting || !dirty || !isValid}
               >
-                {isSubmitting ? 'Saving...' : mode === 'add' ? 'Add Customer' : 'Save Changes'}
+                {isSubmitting ? t('common.saving') : mode === 'add' ? t('customers.add') : t('common.save')}
               </Button>
             </DialogActions>
           </Form>

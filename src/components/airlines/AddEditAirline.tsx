@@ -11,8 +11,11 @@ import {
   CircularProgress
 } from '@mui/material';
 import { TextField } from 'formik-mui';
-import { Airline } from '../../services/firebase/airline.service';
+import { Airline, airlineService } from '../../services/firebase/airline.service';
 import { useTranslation } from 'react-i18next';
+import { useSnackbar } from '../../hooks/useSnackbar';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 
 interface AirlineFormData {
   name: string;
@@ -21,7 +24,7 @@ interface AirlineFormData {
 interface AddEditAirlineProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (formData: AirlineFormData) => Promise<void>;
+  onSuccess?: (airline: Airline) => void;
   initialData?: Airline;
   mode: 'add' | 'edit';
 }
@@ -29,11 +32,13 @@ interface AddEditAirlineProps {
 const AddEditAirline: React.FC<AddEditAirlineProps> = ({
   open,
   onClose,
-  onSubmit,
+  onSuccess,
   initialData,
   mode
 }) => {
   const { t } = useTranslation();
+  const { enqueueSnackbar } = useSnackbar();
+  const { user } = useSelector((state: RootState) => state.auth);
 
   const validationSchema = Yup.object().shape({
     name: Yup.string()
@@ -50,6 +55,24 @@ const AddEditAirline: React.FC<AddEditAirlineProps> = ({
     onClose();
   };
 
+  const handleSubmit = async (values: AirlineFormData) => {
+    if (!user) return;
+
+    try {
+      if (mode === 'edit' && initialData) {
+        await airlineService.updateAirline(initialData.id, values.name, user);
+        enqueueSnackbar(t('airlines.notifications.updated'), { severity: 'success' });
+      } else {
+        const newAirline = await airlineService.addAirline(values.name, user);
+        enqueueSnackbar(t('airlines.notifications.added'), { severity: 'success' });
+        onSuccess?.(newAirline);
+      }
+      handleClose();
+    } catch (error: any) {
+      enqueueSnackbar(error.message || t('common.error'), { severity: 'error' });
+    }
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -63,18 +86,7 @@ const AddEditAirline: React.FC<AddEditAirlineProps> = ({
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
-        onSubmit={async (values, { setSubmitting, resetForm }) => {
-          try {
-            await onSubmit(values);
-            resetForm();
-            handleClose();
-          } catch (error) {
-            // Error is caught and handled (snackbar) in the parent component's handleSubmit
-            // No need to call t() here for snackbar message
-          } finally {
-            setSubmitting(false);
-          }
-        }}
+        onSubmit={handleSubmit}
         enableReinitialize
       >
         {({ isSubmitting, dirty, isValid }) => (

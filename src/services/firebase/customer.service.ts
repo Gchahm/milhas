@@ -81,7 +81,7 @@ export class CustomerService {
     }
   }
 
-  async addCustomer(customerData: Omit<Customer, 'id' | 'createdAt'>, currentUser: User): Promise<void> {
+  async addCustomer(customerData: Omit<Customer, 'id' | 'createdAt'>, currentUser: User): Promise<Customer> {
     if (!currentUser) {
       throw new Error('No authenticated user');
     }
@@ -93,8 +93,13 @@ export class CustomerService {
       };
 
       const customersRef = collection(db, 'users', currentUser.uid, 'customers');
-      await addDoc(customersRef, customerWithMetadata);
-      // No need to return anything as the subscription will handle the update
+      const docRef = await addDoc(customersRef, customerWithMetadata);
+      
+      return {
+        id: docRef.id,
+        ...customerData,
+        createdAt: customerWithMetadata.createdAt
+      };
     } catch (error: any) {
       throw new Error(`Error adding customer: ${error.message}`);
     }

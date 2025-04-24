@@ -23,6 +23,8 @@ import { saleService } from '../../services/firebase/sale.service';
 import { useSnackbar } from '../../hooks/useSnackbar';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
+import AddEditCustomer from '../customers/AddEditCustomer';
+import AddEditAirline from '../airlines/AddEditAirline';
 
 type SaleFormData = Omit<Sale, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -39,6 +41,8 @@ const SaleForm: React.FC = () => {
 
   const [initialSale, setInitialSale] = useState<Sale | null>(null);
   const [loading, setLoading] = useState(!!id);
+  const [showCustomerDialog, setShowCustomerDialog] = useState(false);
+  const [showAirlineDialog, setShowAirlineDialog] = useState(false);
 
   const validationSchema = Yup.object().shape({
     date: Yup.date().required(t('sales.validation.dateRequired')).typeError(t('sales.validation.invalidDate')),
@@ -116,113 +120,153 @@ const SaleForm: React.FC = () => {
           onSubmit={handleSubmit}
           enableReinitialize
         >
-          {({ isSubmitting, dirty, isValid, setFieldValue, values, errors, touched }) => (
-            <Form>
-              <Grid container spacing={3}>
-                <Grid size={12}>
-                  <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <DatePicker
-                      label={t('sales.labelDate')}
-                      value={values.date}
-                      onChange={(newValue) => setFieldValue('date', newValue)}
-                      slotProps={{
-                        textField: {
-                          name: "date",
-                          fullWidth: true,
-                          variant: "outlined",
-                          error: Boolean(touched.date && errors.date),
-                          helperText: touched.date && errors.date ? String(errors.date) : ' '
-                        }
-                      }}
+          {({ isSubmitting, dirty, isValid, setFieldValue, values, errors, touched }) => {
+            const handleCustomerCreated = (customer: Customer) => {
+              setFieldValue('customerId', customer.id);
+            };
+
+            const handleAirlineCreated = (airline: Airline) => {
+              setFieldValue('airlineId', airline.id);
+            };
+
+            return (
+              <Form>
+                <Grid container spacing={3}>
+                  <Grid size={12}>
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                      <DatePicker
+                        label={t('sales.labelDate')}
+                        value={values.date}
+                        onChange={(newValue) => setFieldValue('date', newValue)}
+                        slotProps={{
+                          textField: {
+                            name: "date",
+                            fullWidth: true,
+                            variant: "outlined",
+                            error: Boolean(touched.date && errors.date),
+                            helperText: touched.date && errors.date ? String(errors.date) : ' '
+                          }
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Autocomplete
+                        id="customer-autocomplete"
+                        options={customers}
+                        getOptionLabel={(option) => option.name}
+                        value={customers.find(c => c.id === values.customerId) || null}
+                        onChange={(event, newValue) => {
+                          setFieldValue('customerId', newValue ? newValue.id : '');
+                        }}
+                        isOptionEqualToValue={(option, value) => option.id === value?.id}
+                        renderInput={(params) => (
+                          <MuiTextField
+                            {...params}
+                            label={t('sales.labelCustomer')}
+                            variant="outlined"
+                            error={Boolean(touched.customerId && errors.customerId)}
+                            helperText={touched.customerId && errors.customerId ? errors.customerId : ' '}
+                          />
+                        )}
+                      />
+                      <Button
+                        variant="outlined"
+                        onClick={() => setShowCustomerDialog(true)}
+                      >
+                        {t('common.add')}
+                      </Button>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Autocomplete
+                        id="airline-autocomplete"
+                        options={airlines}
+                        getOptionLabel={(option) => option.name}
+                        value={airlines.find(a => a.id === values.airlineId) || null}
+                        onChange={(event, newValue) => {
+                          setFieldValue('airlineId', newValue ? newValue.id : '');
+                        }}
+                        isOptionEqualToValue={(option, value) => option.id === value?.id}
+                        renderInput={(params) => (
+                          <MuiTextField
+                            {...params}
+                            label={t('sales.labelAirline')}
+                            variant="outlined"
+                            error={Boolean(touched.airlineId && errors.airlineId)}
+                            helperText={touched.airlineId && errors.airlineId ? errors.airlineId : ' '}
+                          />
+                        )}
+                      />
+                      <Button
+                        variant="outlined"
+                        onClick={() => setShowAirlineDialog(true)}
+                      >
+                        {t('common.add')}
+                      </Button>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Field
+                      as={MuiTextField}
+                      name="value"
+                      label={t('sales.labelValue')}
+                      type="number"
+                      fullWidth
+                      variant="outlined"
+                      error={Boolean(touched.value && errors.value)}
+                      helperText={touched.value && errors.value ? errors.value : ' '}
+                      InputProps={{ inputProps: { min: 0 } }}
                     />
-                  </LocalizationProvider>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Field
+                      as={MuiTextField}
+                      name="cost"
+                      label={t('sales.labelCost')}
+                      type="number"
+                      fullWidth
+                      variant="outlined"
+                      error={Boolean(touched.cost && errors.cost)}
+                      helperText={touched.cost && errors.cost ? errors.cost : ' '}
+                      InputProps={{ inputProps: { min: 0 } }}
+                    />
+                  </Grid>
+                  <Grid size={12}>
+                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                      <Button onClick={() => navigate('/sales')}>
+                        {t('common.cancel')}
+                      </Button>
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        disabled={isSubmitting || !dirty || !isValid}
+                      >
+                        {isSubmitting ? <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} /> : null}
+                        {isSubmitting ? t('common.saving') : id ? t('common.save') : t('sales.add')}
+                      </Button>
+                    </Box>
+                  </Grid>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Autocomplete
-                    id="customer-autocomplete"
-                    options={customers}
-                    getOptionLabel={(option) => option.name}
-                    value={customers.find(c => c.id === values.customerId) || null}
-                    onChange={(event, newValue) => {
-                      setFieldValue('customerId', newValue ? newValue.id : '');
-                    }}
-                    isOptionEqualToValue={(option, value) => option.id === value?.id}
-                    renderInput={(params) => (
-                      <MuiTextField
-                        {...params}
-                        label={t('sales.labelCustomer')}
-                        variant="outlined"
-                        error={Boolean(touched.customerId && errors.customerId)}
-                        helperText={touched.customerId && errors.customerId ? errors.customerId : ' '}
-                      />
-                    )}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Autocomplete
-                    id="airline-autocomplete"
-                    options={airlines}
-                    getOptionLabel={(option) => option.name}
-                    value={airlines.find(a => a.id === values.airlineId) || null}
-                    onChange={(event, newValue) => {
-                      setFieldValue('airlineId', newValue ? newValue.id : '');
-                    }}
-                    isOptionEqualToValue={(option, value) => option.id === value?.id}
-                    renderInput={(params) => (
-                      <MuiTextField
-                        {...params}
-                        label={t('sales.labelAirline')}
-                        variant="outlined"
-                        error={Boolean(touched.airlineId && errors.airlineId)}
-                        helperText={touched.airlineId && errors.airlineId ? errors.airlineId : ' '}
-                      />
-                    )}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Field
-                    as={MuiTextField}
-                    name="value"
-                    label={t('sales.labelValue')}
-                    type="number"
-                    fullWidth
-                    variant="outlined"
-                    error={Boolean(touched.value && errors.value)}
-                    helperText={touched.value && errors.value ? errors.value : ' '}
-                    InputProps={{ inputProps: { min: 0 } }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Field
-                    as={MuiTextField}
-                    name="cost"
-                    label={t('sales.labelCost')}
-                    type="number"
-                    fullWidth
-                    variant="outlined"
-                    error={Boolean(touched.cost && errors.cost)}
-                    helperText={touched.cost && errors.cost ? errors.cost : ' '}
-                    InputProps={{ inputProps: { min: 0 } }}
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                    <Button onClick={() => navigate('/sales')}>
-                      {t('common.cancel')}
-                    </Button>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      disabled={isSubmitting || !dirty || !isValid}
-                    >
-                      {isSubmitting ? <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} /> : null}
-                      {isSubmitting ? t('common.saving') : id ? t('common.save') : t('sales.add')}
-                    </Button>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Form>
-          )}
+
+                <AddEditCustomer
+                  open={showCustomerDialog}
+                  onClose={() => setShowCustomerDialog(false)}
+                  onSuccess={handleCustomerCreated}
+                  mode="add"
+                />
+
+                <AddEditAirline
+                  open={showAirlineDialog}
+                  onClose={() => setShowAirlineDialog(false)}
+                  onSuccess={handleAirlineCreated}
+                  mode="add"
+                />
+              </Form>
+            );
+          }}
         </Formik>
       </Paper>
     </Box>

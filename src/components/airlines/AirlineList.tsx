@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { airlineService, type Airline } from '../../services/firebase/airline.service';
-import { setError } from '../../store/slices/airlineSlice';
-import { showSnackbar } from '../../store/slices/snackbarSlice';
+import { type Airline } from '../../services/firebase/airline.service';
 import { RootState } from '../../store';
 import {
   Table,
@@ -25,7 +23,6 @@ const AirlineList = () => {
   const dispatch = useDispatch();
   const { airlines } = useSelector((state: RootState) => state.airlines);
   const { error } = useSelector((state: RootState) => state.airlines);
-  const { user } = useSelector((state: RootState) => state.auth);
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAirline, setSelectedAirline] = useState<Airline | undefined>();
@@ -43,33 +40,6 @@ const AirlineList = () => {
   const handleClose = () => {
     setDialogOpen(false);
     setSelectedAirline(undefined);
-  };
-
-  const handleSubmit = async (formData: { name: string }) => {
-    if (!user) return;
-
-    try {
-      if (selectedAirline) {
-        await airlineService.updateAirline(selectedAirline.id, formData.name, user);
-        dispatch(showSnackbar({
-          message: 'Airline updated successfully!',
-          severity: 'success'
-        }));
-      } else {
-        await airlineService.addAirline(formData.name, user);
-        dispatch(showSnackbar({
-          message: 'Airline added successfully!',
-          severity: 'success'
-        }));
-      }
-      handleClose();
-    } catch (error: any) {
-      dispatch(setError(error.message));
-      dispatch(showSnackbar({
-        message: error.message,
-        severity: 'error'
-      }));
-    }
   };
 
   if (error) return <Typography color="error">{error}</Typography>;
@@ -123,7 +93,6 @@ const AirlineList = () => {
       <AddEditAirline
         open={dialogOpen}
         onClose={handleClose}
-        onSubmit={handleSubmit}
         initialData={selectedAirline}
         mode={selectedAirline ? 'edit' : 'add'}
       />
