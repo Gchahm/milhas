@@ -16,6 +16,7 @@ import DashboardLayout from './components/layout/DashboardLayout';
 import AppSnackbar from './components/common/AppSnackbar';
 import { CircularProgress, Box } from '@mui/material';
 import SaleList from './components/sales/SaleList';
+import SaleForm from './components/sales/SaleForm';
 import { useSales } from './hooks/useSales';
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useSelector((state: RootState) => state.auth);
@@ -91,6 +92,22 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <SaleList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sales/create"
+            element={
+              <ProtectedRoute>
+                <SaleForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sales/edit/:id"
+            element={
+              <ProtectedRoute>
+                <SaleForm />
               </ProtectedRoute>
             }
           />
