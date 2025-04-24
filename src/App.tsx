@@ -42,9 +42,6 @@ const App = () => {
   useSales();
   const { user, loading } = useSelector((state: RootState) => state.auth);
 
-  console.log(user, 'user');
-  console.log(loading, 'loading');
-
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">

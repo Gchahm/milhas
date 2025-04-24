@@ -25,12 +25,15 @@ import {
   ChevronLeft as ChevronLeftIcon,
   Logout as LogoutIcon,
   Dashboard as DashboardIcon,
-  PointOfSale as PointOfSaleIcon
+  PointOfSale as PointOfSaleIcon,
+  Brightness4 as Brightness4Icon,
+  Brightness7 as Brightness7Icon
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
 import { authService } from '../../services/firebase/auth.service';
 import { setUser } from '../../store/slices/authSlice';
+import { useThemeMode } from '../../contexts/ThemeContext';
 
 const drawerWidth = 240;
 
@@ -72,6 +75,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const location = useLocation();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { mode, toggleTheme } = useThemeMode();
 
   const handleDrawerToggle = () => {
     setOpen(!open);
@@ -102,6 +106,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
           }),
+          zIndex: (theme) => theme.zIndex.drawer + 1
         }}
       >
         <Toolbar>
@@ -117,6 +122,9 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Sales Management
           </Typography>
+          <IconButton sx={{ ml: 1 }} onClick={toggleTheme} color="inherit">
+            {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+          </IconButton>
           {user && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="body2">{user.email}</Typography>
