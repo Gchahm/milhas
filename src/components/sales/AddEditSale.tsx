@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Formik, Form, Field } from 'formik';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import {
   Dialog,
@@ -10,32 +10,27 @@ import {
   Box,
   CircularProgress,
   Grid,
-  TextField as MuiTextField // Alias to avoid clash with Formik's Field
+  TextField as MuiTextField,
+  Autocomplete
 } from '@mui/material';
-import { TextField } from 'formik-mui'; // Formik integration for TextField
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useTranslation } from 'react-i18next';
 import { Sale } from '../../models/sale.model';
-import { format } from 'date-fns'; // For date formatting if needed outside DatePicker
+import { Customer } from '../../models/customer.model';
+import { Airline } from '../../services/firebase/airline.service';
 
-// Assuming Airline and Customer types exist
-// import { Airline } from '../../services/firebase/airline.service';
-// import { Customer } from '../../models/customer.model'; // Assuming customer model exists
-
-// Simplified input data type (without id, createdAt, updatedAt)
 type SaleFormData = Omit<Sale, 'id' | 'createdAt' | 'updatedAt'>;
 
 interface AddEditSaleProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (formData: SaleFormData) => Promise<void>;
-  initialData?: Sale; // Use full Sale model here for initial values
+  initialData?: Sale;
   mode: 'add' | 'edit';
-  // TODO: Pass airlines and customers lists for dropdowns
-  // airlines: Airline[];
-  // customers: Customer[];
+  customers: Customer[];
+  airlines: Airline[];
 }
 
 const AddEditSale: React.FC<AddEditSaleProps> = ({
@@ -44,25 +39,25 @@ const AddEditSale: React.FC<AddEditSaleProps> = ({
   onSubmit,
   initialData,
   mode,
-  // airlines,
-  // customers,
+  customers,
+  airlines,
 }) => {
   const { t } = useTranslation();
 
   const validationSchema = Yup.object().shape({
     date: Yup.date()
-      .required(t('Date is required'))
-      .typeError(t('Invalid Date')), // Handle invalid date input
+      .required(t('Sale date is required'))
+      .typeError(t('Invalid Date')),
     customerId: Yup.string()
-        .required(t('Customer is required')),
+        .required(t('Customer selection is required')),
     airlineId: Yup.string()
-        .required(t('Airline is required')),
+        .required(t('Airline selection is required')),
     value: Yup.number()
-      .required(t('Value is required'))
-      .positive(t('Value must be positive'))
+      .required(t('Sale value is required'))
+      .positive(t('Value must be a positive number'))
       .typeError(t('Value must be a number')),
     cost: Yup.number()
-      .required(t('Cost is required'))
+      .required(t('Sale cost is required'))
       .min(0, t('Cost cannot be negative'))
       .typeError(t('Cost must be a number')),
   });
@@ -78,6 +73,9 @@ const AddEditSale: React.FC<AddEditSaleProps> = ({
   const handleClose = () => {
     onClose();
   };
+
+  const findInitialCustomer = () => customers.find(c => c.id === initialValues.customerId) || null;
+  const findInitialAirline = () => airlines.find(a => a.id === initialValues.airlineId) || null;
 
   return (
     <Dialog
@@ -95,20 +93,19 @@ const AddEditSale: React.FC<AddEditSaleProps> = ({
         onSubmit={async (values, { setSubmitting, resetForm }) => {
           try {
             await onSubmit(values);
-            resetForm(); // Reset form on successful submission
-            // onClose is called within the parent's handleSubmit success path
+            resetForm();
           } catch (error) {
-            // Error handled (snackbar) in parent component
+            // Error handled in parent
           } finally {
             setSubmitting(false);
           }
         }}
-        enableReinitialize // Important to update form when initialData changes for edit
+        enableReinitialize
       >
-        {({ isSubmitting, dirty, isValid, setFieldValue, values }) => (
+        {({ isSubmitting, dirty, isValid, setFieldValue, values, errors, touched }) => (
           <Form>
             <DialogContent>
-              <Box sx={{ pt: 1 }}> {/* Reduced padding top */}
+              <Box sx={{ pt: 1 }}>
                 <Grid container spacing={2}>
                    <Grid size={12}>
                      <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -117,66 +114,92 @@ const AddEditSale: React.FC<AddEditSaleProps> = ({
                          value={values.date}
                          onChange={(newValue) => setFieldValue('date', newValue)}
                          slotProps={{
-                            textField: (params) => ({
+                            textField: {
                                 name: "date",
                                 fullWidth: true,
                                 variant: "outlined",
-                            })
+                                error: Boolean(touched.date && errors.date),
+                                // helperText: touched.date && errors.date ? errors.date : ' '
+                            }
                          }}
                          />
                      </LocalizationProvider>
                    </Grid>
-                  <Grid size={{xs:12, sm:6}}>
-                    {/* TODO: Replace with Select/Autocomplete for Customers */}
-                    <Field
-                      component={TextField}
-                      name="customerId"
-                      label={t('Customer ID')} // TEMP Label
-                      fullWidth
-                      variant="outlined"
-                    />
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Autocomplete
+                        id="customer-autocomplete"
+                        options={customers}
+                        getOptionLabel={(option) => option.name}
+                        value={findInitialCustomer()}
+                        onChange={(event, newValue) => {
+                            setFieldValue('customerId', newValue ? newValue.id : '');
+                        }}
+                        isOptionEqualToValue={(option, value) => option.id === value?.id}
+                        renderInput={(params) => (
+                            <MuiTextField
+                                {...params}
+                                label={t('Customer')}
+                                variant="outlined"
+                                error={Boolean(touched.customerId && errors.customerId)}
+                                helperText={touched.customerId && errors.customerId ? errors.customerId : ' '}
+                            />
+                        )}
+                        />
                   </Grid>
-                  <Grid size={{xs:12, sm:6}}>
-                     {/* TODO: Replace with Select/Autocomplete for Airlines */}
+                   <Grid size={{ xs: 12, sm: 6 }}>
+                     <Autocomplete
+                         id="airline-autocomplete"
+                         options={airlines}
+                         getOptionLabel={(option) => option.name}
+                         value={findInitialAirline()}
+                         onChange={(event, newValue) => {
+                             setFieldValue('airlineId', newValue ? newValue.id : '');
+                         }}
+                          isOptionEqualToValue={(option, value) => option.id === value?.id}
+                         renderInput={(params) => (
+                             <MuiTextField
+                                 {...params}
+                                 label={t('Airline')}
+                                 variant="outlined"
+                                 error={Boolean(touched.airlineId && errors.airlineId)}
+                                 helperText={touched.airlineId && errors.airlineId ? errors.airlineId : ' '}
+                             />
+                         )}
+                         />
+                   </Grid>
+                   <Grid size={{ xs: 12, sm: 6 }}>
                      <Field
-                       component={TextField}
-                       name="airlineId"
-                       label={t('Airline ID')} // TEMP Label
+                       as={MuiTextField}
+                       name="value"
+                       label={t('Sale Value')}
+                       type="number"
                        fullWidth
                        variant="outlined"
+                       error={Boolean(touched.value && errors.value)}
+                       helperText={touched.value && errors.value ? errors.value : ' '}
+                      InputProps={{ inputProps: { min: 0 } }}
                      />
                    </Grid>
-                   <Grid size={{xs:12, sm:6}}>
-                   <Field
-                      component={TextField}
-                      name="value"
-                      label={t('Sale Value')}
-                      type="number"
-                      fullWidth
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid size={{xs:12, sm:6}}>
-                    <Field
-                      component={TextField}
-                      name="cost"
-                      label={t('Sale Cost')}
-                      type="number"
-                      fullWidth
-                      variant="outlined"
-                    />
-                  </Grid>
+                   <Grid size={{ xs: 12, sm: 6 }}>
+                     <Field
+                       as={MuiTextField}
+                       name="cost"
+                       label={t('Sale Cost')}
+                       type="number"
+                       fullWidth
+                       variant="outlined"
+                       error={Boolean(touched.cost && errors.cost)}
+                       helperText={touched.cost && errors.cost ? errors.cost : ' '}
+                       InputProps={{ inputProps: { min: 0 } }}
+                     />
+                   </Grid>
                 </Grid>
               </Box>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleClose} disabled={isSubmitting}>{t('Cancel')}</Button>
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={isSubmitting || !dirty || !isValid}
-                startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
-              >
+              <Button type="submit" variant="contained" disabled={isSubmitting || !dirty || !isValid}>
+                {isSubmitting ? <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} /> : null}
                 {isSubmitting ? t('Saving...') : mode === 'add' ? t('Add Sale') : t('Save Changes')}
               </Button>
             </DialogActions>

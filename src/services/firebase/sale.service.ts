@@ -11,21 +11,27 @@ import {
   query,
   Timestamp,
   orderBy,
-  Unsubscribe
+  Unsubscribe,
+  DocumentReference
 } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { Sale } from '../../models/sale.model';
 
 const USERS_COLLECTION = 'users';
 const SALES_COLLECTION = 'sales';
+const CUSTOMERS_COLLECTION = 'customers';
+const AIRLINES_COLLECTION = 'airlines';
 
-const convertToSale = (doc: QueryDocumentSnapshot<DocumentData>): Sale => {
-  const data = doc.data();
+const convertToSale = (docSnap: QueryDocumentSnapshot<DocumentData>): Sale => {
+  const data = docSnap.data();
+  const customerRef = data.customerId as DocumentReference | undefined;
+  const airlineRef = data.airlineId as DocumentReference | undefined;
+
   return {
-    id: doc.id,
+    id: docSnap.id,
     date: (data.date as Timestamp)?.toDate() || new Date(),
-    customerId: data.customerId || '',
-    airlineId: data.airlineId || '',
+    customerId: customerRef?.id || '',
+    airlineId: airlineRef?.id || '',
     value: data.value || 0,
     cost: data.cost || 0,
     createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
@@ -45,6 +51,10 @@ export class SaleService {
       SaleService.instance = new SaleService();
     }
     return SaleService.instance;
+  }
+
+  private getDocRef(collectionName: string, userId: string, docId: string): DocumentReference {
+    return doc(db, USERS_COLLECTION, userId, collectionName, docId);
   }
 
   subscribeToSales(userId: string, callback: (sales: Sale[]) => void, onError: (error: Error) => void): Unsubscribe {
@@ -70,11 +80,17 @@ export class SaleService {
     if (!currentUser) {
       throw new Error('User not authenticated.');
     }
+    if (!saleData.customerId || !saleData.airlineId) {
+        throw new Error('Customer ID and Airline ID are required.');
+    }
     try {
       const salesRef = collection(db, USERS_COLLECTION, currentUser.uid, SALES_COLLECTION);
       const docData = {
-        ...saleData,
+        customerId: this.getDocRef(CUSTOMERS_COLLECTION, currentUser.uid, saleData.customerId),
+        airlineId: this.getDocRef(AIRLINES_COLLECTION, currentUser.uid, saleData.airlineId),
         date: Timestamp.fromDate(saleData.date),
+        value: saleData.value,
+        cost: saleData.cost,
         createdAt: Timestamp.now()
       };
       const docRef = await addDoc(salesRef, docData);
@@ -91,11 +107,21 @@ export class SaleService {
     }
     try {
       const saleRef = doc(db, USERS_COLLECTION, currentUser.uid, SALES_COLLECTION, saleId);
-      const updateData: any = { ...saleData, updatedAt: Timestamp.now() };
+      const updateData: { [key: string]: any } = {
+          updatedAt: Timestamp.now()
+      };
 
+      if (saleData.customerId) {
+        updateData.customerId = this.getDocRef(CUSTOMERS_COLLECTION, currentUser.uid, saleData.customerId);
+      }
+      if (saleData.airlineId) {
+        updateData.airlineId = this.getDocRef(AIRLINES_COLLECTION, currentUser.uid, saleData.airlineId);
+      }
       if (saleData.date) {
         updateData.date = Timestamp.fromDate(saleData.date);
       }
+      if (saleData.value !== undefined) updateData.value = saleData.value;
+      if (saleData.cost !== undefined) updateData.cost = saleData.cost;
 
       await updateDoc(saleRef, updateData);
     } catch (error: any) {

@@ -10,26 +10,28 @@ import {
   setDoc,
   onSnapshot,
   query,
-  Unsubscribe
+  Unsubscribe,
+  Timestamp
 } from 'firebase/firestore';
 import { User } from 'firebase/auth';
-
-export interface Customer {
-  id: string;
-  name: string;
-  cpf: string;
-  email: string;
-  phone: string;
-  createdAt: Date;
-}
+import { Customer } from '../../models/customer.model'; // Import the Customer model
 
 const USERS_COLLECTION = 'users';
+const CUSTOMERS_COLLECTION = 'customers';
 
-const convertToCustomer = (doc: QueryDocumentSnapshot<DocumentData>): Customer => ({
-  id: doc.id,
-  ...(doc.data() as Omit<Customer, 'id' | 'createdAt'>),
-  createdAt: doc.data().createdAt?.toDate() || new Date()
-});
+const convertToCustomer = (docSnap: QueryDocumentSnapshot<DocumentData>): Customer => {
+  const data = docSnap.data();
+  return {
+    id: docSnap.id,
+    name: data.name || 'Unknown', // Provide default name
+    cpf: data.cpf || '',
+    email: data.email || '',
+    phone: data.phone || '',
+    createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+    updatedAt: (data.updatedAt as Timestamp)?.toDate()
+    // Map other fields if necessary
+  };
+};
 
 export class CustomerService {
   private static instance: CustomerService;
@@ -71,7 +73,7 @@ export class CustomerService {
     }
 
     try {
-      const customersRef = collection(db, USERS_COLLECTION, currentUser.uid, 'customers');
+      const customersRef = collection(db, USERS_COLLECTION, currentUser.uid, CUSTOMERS_COLLECTION);
       const querySnapshot = await getDocs(customersRef);
       return querySnapshot.docs.map(convertToCustomer);
     } catch (error: any) {

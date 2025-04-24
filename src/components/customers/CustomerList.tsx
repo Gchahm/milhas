@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { customerService, type Customer } from '../../services/firebase/customer.service';
-import { setError } from '../../store/slices/customerSlice';
+import { customerService } from '../../services/firebase/customer.service';
 import { showSnackbar } from '../../store/slices/snackbarSlice';
 import { RootState } from '../../store';
 import {
@@ -20,6 +19,8 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import AddEditCustomer from './AddEditCustomer';
+import { Customer } from '../../models/customer.model';
+import { setError } from '../../store/slices/authSlice';
 
 const CustomerList = () => {
   const dispatch = useDispatch();

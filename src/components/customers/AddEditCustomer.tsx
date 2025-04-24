@@ -10,7 +10,7 @@ import {
   Box
 } from '@mui/material';
 import { TextField } from 'formik-mui';
-import { Customer } from '../../services/firebase/customer.service';
+import { Customer } from '../../models/customer.model';
 
 interface CustomerFormData {
   name: string;

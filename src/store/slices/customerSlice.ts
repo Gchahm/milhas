@@ -1,13 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Customer } from '../../services/firebase/customer.service';
+import { Customer } from '../../models/customer.model';
 
-interface CustomerState {
+interface CustomersState {
   customers: Customer[];
   loading: boolean;
   error: string | null;
 }
 
-const initialState: CustomerState = {
+const initialState: CustomersState = {
   customers: [],
   loading: false,
   error: null,
