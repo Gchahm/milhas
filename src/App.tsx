@@ -16,7 +16,7 @@ import DashboardLayout from './components/layout/DashboardLayout';
 import AppSnackbar from './components/common/AppSnackbar';
 import { CircularProgress, Box } from '@mui/material';
 import SaleList from './components/sales/SaleList';
-
+import { useSales } from './hooks/useSales';
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useSelector((state: RootState) => state.auth);
 
@@ -39,6 +39,7 @@ const App = () => {
   useAuthInitialize();
   useCustomers();
   useAirlines();
+  useSales();
   const { user, loading } = useSelector((state: RootState) => state.auth);
 
   if (loading) {
