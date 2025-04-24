@@ -45,21 +45,11 @@ const AddEditSale: React.FC<AddEditSaleProps> = ({
   const { t } = useTranslation();
 
   const validationSchema = Yup.object().shape({
-    date: Yup.date()
-      .required(t('Sale date is required'))
-      .typeError(t('Invalid Date')),
-    customerId: Yup.string()
-        .required(t('Customer selection is required')),
-    airlineId: Yup.string()
-        .required(t('Airline selection is required')),
-    value: Yup.number()
-      .required(t('Sale value is required'))
-      .positive(t('Value must be a positive number'))
-      .typeError(t('Value must be a number')),
-    cost: Yup.number()
-      .required(t('Sale cost is required'))
-      .min(0, t('Cost cannot be negative'))
-      .typeError(t('Cost must be a number')),
+    date: Yup.date().required(t('sales.validation.dateRequired')).typeError(t('sales.validation.invalidDate')),
+    customerId: Yup.string().required(t('customers.validation.selectRequired')),
+    airlineId: Yup.string().required(t('airlines.validation.selectRequired')),
+    value: Yup.number().required(t('sales.validation.valueRequired')).positive(t('sales.validation.valuePositive')).typeError(t('sales.validation.valueType')),
+    cost: Yup.number().required(t('sales.validation.costRequired')).min(0, t('sales.validation.costMin')).typeError(t('sales.validation.costType')),
   });
 
   const initialValues: SaleFormData = {
@@ -85,7 +75,7 @@ const AddEditSale: React.FC<AddEditSaleProps> = ({
       fullWidth
     >
       <DialogTitle>
-        {mode === 'add' ? t('Add New Sale') : t('Edit Sale')}
+        {mode === 'add' ? t('sales.addNew') : t('sales.edit')}
       </DialogTitle>
       <Formik
         initialValues={initialValues}
@@ -110,7 +100,7 @@ const AddEditSale: React.FC<AddEditSaleProps> = ({
                    <Grid size={12}>
                      <LocalizationProvider dateAdapter={AdapterDateFns}>
                        <DatePicker
-                         label={t('Sale Date')}
+                         label={t('sales.labelDate')}
                          value={values.date}
                          onChange={(newValue) => setFieldValue('date', newValue)}
                          slotProps={{
@@ -138,7 +128,7 @@ const AddEditSale: React.FC<AddEditSaleProps> = ({
                         renderInput={(params) => (
                             <MuiTextField
                                 {...params}
-                                label={t('Customer')}
+                                label={t('sales.labelCustomer')}
                                 variant="outlined"
                                 error={Boolean(touched.customerId && errors.customerId)}
                                 helperText={touched.customerId && errors.customerId ? errors.customerId : ' '}
@@ -159,7 +149,7 @@ const AddEditSale: React.FC<AddEditSaleProps> = ({
                          renderInput={(params) => (
                              <MuiTextField
                                  {...params}
-                                 label={t('Airline')}
+                                 label={t('sales.labelAirline')}
                                  variant="outlined"
                                  error={Boolean(touched.airlineId && errors.airlineId)}
                                  helperText={touched.airlineId && errors.airlineId ? errors.airlineId : ' '}
@@ -171,7 +161,7 @@ const AddEditSale: React.FC<AddEditSaleProps> = ({
                      <Field
                        as={MuiTextField}
                        name="value"
-                       label={t('Sale Value')}
+                       label={t('sales.labelValue')}
                        type="number"
                        fullWidth
                        variant="outlined"
@@ -184,7 +174,7 @@ const AddEditSale: React.FC<AddEditSaleProps> = ({
                      <Field
                        as={MuiTextField}
                        name="cost"
-                       label={t('Sale Cost')}
+                       label={t('sales.labelCost')}
                        type="number"
                        fullWidth
                        variant="outlined"
@@ -197,10 +187,10 @@ const AddEditSale: React.FC<AddEditSaleProps> = ({
               </Box>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleClose} disabled={isSubmitting}>{t('Cancel')}</Button>
+              <Button onClick={handleClose} disabled={isSubmitting}>{t('common.cancel')}</Button>
               <Button type="submit" variant="contained" disabled={isSubmitting || !dirty || !isValid}>
                 {isSubmitting ? <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} /> : null}
-                {isSubmitting ? t('Saving...') : mode === 'add' ? t('Add Sale') : t('Save Changes')}
+                {isSubmitting ? t('common.saving') : mode === 'add' ? t('sales.add') : t('airlines.Save Changes')}
               </Button>
             </DialogActions>
           </Form>

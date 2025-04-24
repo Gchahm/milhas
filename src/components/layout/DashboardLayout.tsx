@@ -38,10 +38,10 @@ interface NavigationItem {
 }
 
 const navigationItems: NavigationItem[] = [
-  { textKey: 'nav_dashboard', path: '/', icon: <DashboardIcon /> },
-  { textKey: 'nav_customers', path: '/customers', icon: <PeopleIcon /> },
-  { textKey: 'nav_airlines', path: '/airlines', icon: <FlightIcon /> },
-  { textKey: 'nav_sales', path: '/sales', icon: <PointOfSaleIcon /> },
+  { textKey: 'dashboard.navDashboard', path: '/', icon: <DashboardIcon /> },
+  { textKey: 'dashboard.navCustomers', path: '/customers', icon: <PeopleIcon /> },
+  { textKey: 'dashboard.navAirlines', path: '/airlines', icon: <FlightIcon /> },
+  { textKey: 'dashboard.navSales', path: '/sales', icon: <PointOfSaleIcon /> },
 ];
 
 interface DashboardLayoutProps {
@@ -87,7 +87,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       >
         <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', px: [1] }}>
           <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-            {t('app_title', 'Sales App')}
+            {t('dashboard.appTitle')}
           </Typography>
         </Toolbar>
         <Divider />
@@ -133,16 +133,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         <Box sx={{ p: 2, mt: 'auto' }}>
           {user && (
              <Typography variant="body2" sx={{ textAlign: 'center', mb: 1, wordBreak: 'break-all' }}>
-               {t('logged_in_as', 'Logged in as:')} {user.email}
+               {t('auth.loggedInAs')} {user.email}
              </Typography>
           )}
           <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
-              <Tooltip title={mode === 'dark' ? t('switch_light_mode', 'Switch to light mode') : t('switch_dark_mode', 'Switch to dark mode')}>
+              <Tooltip title={mode === 'dark' ? t('dashboard.switchLightMode') : t('dashboard.switchDarkMode')}>
                 <IconButton onClick={toggleTheme} color="inherit">
                   {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
                 </IconButton>
               </Tooltip>
-              <Tooltip title={t('logout', 'Logout')}>
+              <Tooltip title={t('auth.logout')}>
                 <IconButton onClick={handleLogout} color="inherit">
                   <LogoutIcon />
                 </IconButton>

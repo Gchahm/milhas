@@ -48,8 +48,8 @@ const SaleList: React.FC = () => {
       return new Map(airlines.map(a => [a.id, a.name]));
   }, [airlines]);
 
-  const getCustomerName = (id: string) => customerMap.get(id) || t('Unknown Customer');
-  const getAirlineName = (id: string) => airlineMap.get(id) || t('Unknown Airline');
+  const getCustomerName = (id: string) => customerMap.get(id) || t('customers.unknown');
+  const getAirlineName = (id: string) => airlineMap.get(id) || t('airlines.unknown');
 
   const handleAdd = () => {
     setSelectedSale(undefined);
@@ -81,9 +81,9 @@ const SaleList: React.FC = () => {
      const saleInfo = `${getCustomerName(saleToDelete.customerId)} / ${getAirlineName(saleToDelete.airlineId)} on ${format(saleToDelete.date, 'yyyy-MM-dd')}`;
      try {
        await saleService.deleteSale(saleToDelete.id, user);
-       enqueueSnackbar(t('Sale for {{saleInfo}} deleted successfully!', { saleInfo }), { severity: 'success' });
+       enqueueSnackbar(t('sales.notifications.deletedContext', { saleInfo }), { severity: 'success' });
      } catch (err: any) {
-       const message = err.message || t('Failed to delete sale for {{saleInfo}}', { saleInfo });
+       const message = err.message || t('sales.notifications.deleteErrorContext', { saleInfo });
        enqueueSnackbar(message, { severity: 'error' });
      } finally {
        handleCloseDeleteDialog();
@@ -92,62 +92,62 @@ const SaleList: React.FC = () => {
 
   const handleSubmit = async (formData: SaleFormData) => {
     if (!user) {
-      enqueueSnackbar(t('You must be logged in to save a sale.'), { severity: 'error' });
-      throw new Error(t('Authentication required'));
+      enqueueSnackbar(t('auth.loginRequired'), { severity: 'error' });
+      throw new Error(t('auth.authenticationRequired'));
     }
-    const action = selectedSale ? t('update') : t('add');
     const saleInfo = `${getCustomerName(formData.customerId)} / ${getAirlineName(formData.airlineId)}`;
 
     try {
       if (selectedSale) {
         await saleService.updateSale(selectedSale.id, formData, user);
-        enqueueSnackbar(t('Sale for {{saleInfo}} updated successfully!', { saleInfo }), { severity: 'success' });
+        enqueueSnackbar(t('sales.notifications.updatedContext', { saleInfo }), { severity: 'success' });
       } else {
         await saleService.addSale(formData, user);
-        enqueueSnackbar(t('Sale for {{saleInfo}} added successfully!', { saleInfo }), { severity: 'success' });
+        enqueueSnackbar(t('sales.notifications.addedContext', { saleInfo }), { severity: 'success' });
       }
       handleCloseDialog();
     } catch (err: any) {
-      const message = err.message || t('Failed to {{action}} sale for {{saleInfo}}', { action, saleInfo });
+      const action = selectedSale ? 'update' : 'add';
+      const message = err.message || t(`sales.notifications.${action}ErrorContext`, { saleInfo });
       enqueueSnackbar(message, { severity: 'error' });
       throw err;
     }
   };
 
   if (!user) {
-     return <Alert severity="warning">{t('Please log in to manage sales.')}</Alert>;
+     return <Alert severity="warning">{t('auth.loginToView')}</Alert>;
   }
 
   return (
     <>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4">{t('Sales Management')}</Typography>
+        <Typography variant="h4">{t('sales.title')}</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd} disabled={isLoading}>
-          {t('Add Sale')}
+          {t('sales.add')}
         </Button>
       </Box>
 
       {isLoading && <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}><CircularProgress /></Box>}
-      {combinedError && !isLoading && <Alert severity="error">{t('Error loading data:')} {combinedError}</Alert>}
+      {combinedError && !isLoading && <Alert severity="error">{t('common.error')}: {combinedError}</Alert>}
 
       {!isLoading && !combinedError && (
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>{t('Date')}</TableCell>
-                <TableCell>{t('Customer')}</TableCell>
-                <TableCell>{t('Airline')}</TableCell>
-                <TableCell align="right">{t('Value')}</TableCell>
-                <TableCell align="right">{t('Cost')}</TableCell>
-                <TableCell>{t('Created At')}</TableCell>
-                <TableCell align="center">{t('Actions')}</TableCell>
+                <TableCell>{t('common.date')}</TableCell>
+                <TableCell>{t('sales.labelCustomer')}</TableCell>
+                <TableCell>{t('sales.labelAirline')}</TableCell>
+                <TableCell align="right">{t('sales.labelValue')}</TableCell>
+                <TableCell align="right">{t('sales.labelCost')}</TableCell>
+                <TableCell>{t('common.createdAt')}</TableCell>
+                <TableCell align="center">{t('common.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {sales.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={7} align="center">{t('No sales found.')}</TableCell>
+                    <TableCell colSpan={7} align="center">{t('sales.noSalesFound')}</TableCell>
                 </TableRow>
               )}
               {sales.map((sale) => (
@@ -159,12 +159,12 @@ const SaleList: React.FC = () => {
                   <TableCell align="right">{sale.cost.toFixed(2)}</TableCell>
                   <TableCell>{format(sale.createdAt, 'yyyy-MM-dd HH:mm')}</TableCell>
                   <TableCell align="center">
-                    <Tooltip title={t('Edit Sale')}>
+                    <Tooltip title={t('sales.edit')}>
                       <IconButton color="primary" onClick={() => handleEdit(sale)} size="small">
                         <EditIcon />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title={t('Delete Sale')}>
+                    <Tooltip title={t('sales.deleteButton')}>
                       <IconButton color="error" onClick={() => handleDeleteRequest(sale)} size="small">
                         <DeleteIcon />
                       </IconButton>
@@ -193,13 +193,14 @@ const SaleList: React.FC = () => {
          open={deleteDialogOpen}
          onClose={handleCloseDeleteDialog}
          onConfirm={handleConfirmDelete}
-         title={t('Confirm Sale Deletion')}
-         message={t('Are you sure you want to delete the sale for {{customer}} / {{airline}} on {{date}}? This action cannot be undone.', {
+         title={t('sales.confirmDeleteTitle')}
+         message={t('sales.confirmDeleteMessageContext', {
              customer: saleToDelete ? getCustomerName(saleToDelete.customerId) : '...',
              airline: saleToDelete ? getAirlineName(saleToDelete.airlineId) : '...',
              date: saleToDelete ? format(saleToDelete.date, 'yyyy-MM-dd') : '...'
          })}
-         confirmText={t('Delete Sale')}
+         confirmText={t('sales.deleteButton')}
+         cancelText={t('common.cancel')}
        />
     </>
   );

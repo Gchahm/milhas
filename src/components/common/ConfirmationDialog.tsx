@@ -52,10 +52,10 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>
-          {cancelText || t('Cancel')} {/* Use translation */}
+          {cancelText || t('common.cancel')}
         </Button>
         <Button onClick={handleConfirm} color="primary" autoFocus>
-          {confirmText || t('Confirm')} {/* Use translation */}
+          {confirmText || t('common.confirm')}
         </Button>
       </DialogActions>
     </Dialog>
