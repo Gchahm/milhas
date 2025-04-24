@@ -7,10 +7,12 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Box
+  Box,
+  CircularProgress
 } from '@mui/material';
 import { TextField } from 'formik-mui';
 import { Airline } from '../../services/firebase/airline.service';
+import { useTranslation } from 'react-i18next';
 
 interface AirlineFormData {
   name: string;
@@ -24,13 +26,6 @@ interface AddEditAirlineProps {
   mode: 'add' | 'edit';
 }
 
-const validationSchema = Yup.object().shape({
-  name: Yup.string()
-    .required('Name is required')
-    .min(2, 'Name must be at least 2 characters')
-    .max(50, 'Name must be less than 50 characters')
-});
-
 const AddEditAirline: React.FC<AddEditAirlineProps> = ({
   open,
   onClose,
@@ -38,26 +33,44 @@ const AddEditAirline: React.FC<AddEditAirlineProps> = ({
   initialData,
   mode
 }) => {
+  const { t } = useTranslation();
+
+  const validationSchema = Yup.object().shape({
+    name: Yup.string()
+      .required(t('Name is required'))
+      .min(2, t('Name must be at least 2 characters'))
+      .max(50, t('Name must be less than 50 characters'))
+  });
+
   const initialValues: AirlineFormData = {
     name: initialData?.name || '',
+  };
+
+  const handleClose = () => {
+    onClose();
   };
 
   return (
     <Dialog 
       open={open} 
-      onClose={onClose} 
+      onClose={handleClose} 
       maxWidth="sm" 
       fullWidth
     >
       <DialogTitle>
-        {mode === 'add' ? 'Add New Airline' : 'Edit Airline'}
+        {mode === 'add' ? t('Add New Airline') : t('Edit Airline')}
       </DialogTitle>
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
-        onSubmit={async (values, { setSubmitting }) => {
+        onSubmit={async (values, { setSubmitting, resetForm }) => {
           try {
             await onSubmit(values);
+            resetForm();
+            handleClose();
+          } catch (error) {
+            // Error is caught and handled (snackbar) in the parent component's handleSubmit
+            // No need to call t() here for snackbar message
           } finally {
             setSubmitting(false);
           }
@@ -71,20 +84,21 @@ const AddEditAirline: React.FC<AddEditAirlineProps> = ({
                 <Field
                   component={TextField}
                   name="name"
-                  label="Airline Name"
+                  label={t('Airline Name')}
                   fullWidth
                   variant="outlined"
                 />
               </Box>
             </DialogContent>
             <DialogActions>
-              <Button onClick={onClose}>Cancel</Button>
-              <Button 
+              <Button onClick={handleClose} disabled={isSubmitting}>{t('Cancel')}</Button>
+              <Button
                 type="submit"
                 variant="contained"
                 disabled={isSubmitting || !dirty || !isValid}
+                startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
               >
-                {mode === 'add' ? 'Add Airline' : 'Save Changes'}
+                {isSubmitting ? t('Saving...') : mode === 'add' ? t('Add Airline') : t('Save Changes')}
               </Button>
             </DialogActions>
           </Form>
