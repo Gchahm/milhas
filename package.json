@@ -84,7 +84,8 @@
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js",
-    "serve": "serve -s build"
+    "serve": "serve -s build",
+    "deploy": "npm run build && firebase deploy"
   },
   "eslintConfig": {
     "extends": [

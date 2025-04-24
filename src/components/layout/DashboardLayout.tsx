@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
-  Drawer,
+  Drawer as MuiDrawer,
   List,
   Typography,
   Divider,
@@ -13,7 +13,11 @@ import {
   ListItemText,
   Toolbar,
   CssBaseline,
-  Tooltip
+  Tooltip,
+  styled,
+  Theme,
+  CSSObject,
+  Button
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
@@ -30,6 +34,44 @@ import { useThemeMode } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
 const drawerWidth = 260;
+const miniDrawerWidth = 80;
+
+const openedMixin = (theme: Theme): CSSObject => ({
+  width: drawerWidth,
+  transition: theme.transitions.create('width', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.enteringScreen,
+  }),
+  overflowX: 'hidden',
+  borderRight: `1px solid ${theme.palette.divider}`,
+});
+
+const closedMixin = (theme: Theme): CSSObject => ({
+  transition: theme.transitions.create('width', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  overflowX: 'hidden',
+  borderRight: `1px solid ${theme.palette.divider}`,
+  width: `${miniDrawerWidth}px`,
+});
+
+const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
+  ({ theme, open }) => ({
+    width: drawerWidth,
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
+    boxSizing: 'border-box',
+    ...(open && {
+      ...openedMixin(theme),
+      '& .MuiDrawer-paper': openedMixin(theme),
+    }),
+    ...(!open && {
+      ...closedMixin(theme),
+      '& .MuiDrawer-paper': closedMixin(theme),
+    }),
+  }),
+);
 
 interface NavigationItem {
   textKey: string;
@@ -55,6 +97,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const { mode, toggleTheme } = useThemeMode();
+  const [open, setOpen] = useState(false);
+
+  const handleDrawerOpen = () => {
+    setOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setOpen(false);
+  };
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -75,78 +126,89 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       <CssBaseline />
       <Drawer
         variant="permanent"
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          [`& .MuiDrawer-paper`]: {
-             width: drawerWidth,
-             boxSizing: 'border-box',
-             borderRight: `1px solid rgba(0, 0, 0, 0.12)`,
-           },
-        }}
+        open={open}
+        onMouseEnter={handleDrawerOpen}
+        onMouseLeave={handleDrawerClose}
       >
-        <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', px: [1] }}>
-          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
+        <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: open ? 'space-between' : 'center', px: [2.5] }}>
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold', opacity: open ? 1 : 0, transition: 'opacity 0.3s' }}>
             {t('dashboard.appTitle')}
           </Typography>
         </Toolbar>
         <Divider />
 
-        <List sx={{ flexGrow: 1, px: 1 }}>
+        <List sx={{ flexGrow: 1, px: 1.5 }}>
           {navigationItems.map((item) => (
-            <Tooltip title={t(item.textKey)} placement="right" key={item.textKey}>
-                <ListItem disablePadding sx={{ display: 'block', mb: 0.5 }}>
-                    <ListItemButton
-                        selected={location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path))}
-                        onClick={() => handleNavigation(item.path)}
-                        sx={{
-                            minHeight: 48,
-                            justifyContent: 'initial',
-                            px: 2.5,
-                            borderRadius: '4px',
-                            '&.Mui-selected': {
-                                backgroundColor: (theme) => theme.palette.action.selected,
-                                fontWeight: 'fontWeightBold',
-                            },
-                            '&:hover': {
-                                backgroundColor: (theme) => theme.palette.action.hover,
-                            }
-                        }}
-                    >
-                        <ListItemIcon
-                            sx={{
-                                minWidth: 0,
-                                mr: 3,
-                                justifyContent: 'center',
-                            }}
-                        >
-                            {item.icon}
-                        </ListItemIcon>
-                        <ListItemText primary={t(item.textKey)} sx={{ opacity: 1 }} />
-                    </ListItemButton>
-                </ListItem>
-            </Tooltip>
+            <ListItem key={item.textKey} disablePadding sx={{ display: 'block', mb: 0.5 }}>
+              <Tooltip title={!open ? t(item.textKey) : ""} placement="right">
+                <ListItemButton
+                  selected={location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path))}
+                  onClick={() => handleNavigation(item.path)}
+                  sx={{
+                    minHeight: 48,
+                    justifyContent: open ? 'initial' : 'center',
+                    px: 2.5,
+                    borderRadius: '4px',
+                    '&.Mui-selected': {
+                      backgroundColor: (theme) => theme.palette.action.selected,
+                      fontWeight: 'fontWeightBold'
+                    },
+                    '&:hover': {
+                      backgroundColor: (theme) => theme.palette.action.hover
+                    }
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : 'auto', justifyContent: 'center' }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText primary={t(item.textKey)} sx={{ opacity: open ? 1 : 0, transition: 'opacity 0.3s' }} />
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
           ))}
         </List>
 
         <Divider />
-        <Box sx={{ p: 2, mt: 'auto' }}>
+        <Box sx={{ p: 2, mt: 'auto', overflow: 'hidden' }}>
           {user && (
-             <Typography variant="body2" sx={{ textAlign: 'center', mb: 1, wordBreak: 'break-all' }}>
-               {t('auth.loggedInAs')} {user.email}
-             </Typography>
+            <Tooltip title={open ? "" : user.email} placement="top">
+              <Typography
+                variant="caption"
+                sx={{
+                  display: 'block',
+                  textAlign: 'center',
+                  mb: 1,
+                  opacity: open ? 0.7 : 0,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  transition: (theme) => theme.transitions.create('opacity', {
+                    duration: theme.transitions.duration.enteringScreen,
+                    delay: open ? theme.transitions.duration.enteringScreen * 0.5 : 0,
+                  }),
+                  height: open ? 'auto' : 0,
+                  color: 'text.secondary'
+                }}
+              >
+                {user.email}
+              </Typography>
+            </Tooltip>
           )}
-          <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
-              <Tooltip title={mode === 'dark' ? t('dashboard.switchLightMode') : t('dashboard.switchDarkMode')}>
-                <IconButton onClick={toggleTheme} color="inherit">
-                  {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={t('auth.logout')}>
-                <IconButton onClick={handleLogout} color="inherit">
-                  <LogoutIcon />
-                </IconButton>
-              </Tooltip>
+
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 0.5 }}>
+            <Tooltip title={mode === 'dark' ? t('dashboard.switchLightMode') : t('dashboard.switchDarkMode')}>
+              <IconButton onClick={toggleTheme} color="inherit" size="small">
+                {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+              </IconButton>
+            </Tooltip>
+          </Box>
+
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Tooltip title={t('auth.logout')}>
+              <IconButton onClick={handleLogout} color="inherit" size="small">
+                <LogoutIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
         </Box>
       </Drawer>
@@ -156,9 +218,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         sx={{
           flexGrow: 1,
           p: 3,
-          width: `calc(100% - ${drawerWidth}px)`,
+          marginLeft: `${miniDrawerWidth}px`,
+          width: `calc(100% - ${miniDrawerWidth}px)`,
           bgcolor: 'background.default',
-          minHeight: '100vh'
+          minHeight: '100vh',
+          transition: (theme) => theme.transitions.create(['margin-left', 'width'], {
+            easing: theme.transitions.easing.sharp,
+            duration: open ? theme.transitions.duration.enteringScreen : theme.transitions.duration.leavingScreen,
+          }),
+          ...(open && {
+            marginLeft: `${drawerWidth}px`,
+            width: `calc(100% - ${drawerWidth}px)`,
+          }),
         }}
       >
         {children}
